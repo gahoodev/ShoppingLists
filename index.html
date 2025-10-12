@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>買い物リスト</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { text-align: center; color: #333; }
+  .tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    background-color: #a399e9;
+    color: white;
+    transition: background 0.2s;
+  }
+  .tab.active { background-color: #7289DA; }
+  .tab:hover { background-color: #877bff; }
+
+  button {
+    margin: 5px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .add-btn { background-color: #1E90FF; }
+  .add-btn:hover { background-color: #1C86EE; }
+  .delete-btn { background-color: #f44336; }
+  .delete-btn:hover { background-color: #e53935; }
+  .restore-btn { background-color: #4CAF50; }
+  .restore-btn:hover { background-color: #43A047; }
+
+  ul { list-style: none; padding-left: 0; }
+  .item-card {
+    background-color: #fff;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s;
+  }
+  .item-card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+  .item-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .item-info img {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+  }
+  .item-text {
+    display: flex;
+    flex-direction: column;
+  }
+  .item-text a {
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+  }
+  .item-text a:hover { text-decoration: underline; }
+
+  svg { vertical-align: middle; }
+  svg.icon { width: 16px; height: 16px; fill: white; }
+</style>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+function App() {
+  const [lists, setLists] = React.useState(() => JSON.parse(localStorage.getItem("lists") || "[]"));
+  const [currentList, setCurrentList] = React.useState(lists[0] || null);
+  const [trash, setTrash] = React.useState([]);
+  const [shipping, setShipping] = React.useState("");
+
+  // ローカル保存
+  React.useEffect(() => { localStorage.setItem("lists", JSON.stringify(lists)); }, [lists]);
+
+  // リスト切り替え自動更新
+  React.useEffect(() => {
+    if (currentList) {
+      const updated = lists.find(l => l.name === currentList.name);
+      if (updated) setCurrentList(updated);
+      else setCurrentList(lists[0] || null);
+    } else {
+      setCurrentList(lists[0] || null);
+    }
+  }, [lists]);
+
+  // URLから共有データを読み込み
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const dataParam = params.get("data");
+    if (dataParam) {
+      try {
+        const decoded = decodeURIComponent(atob(dataParam));
+        const importedLists = JSON.parse(decoded);
+        if (Array.isArray(importedLists)) {
+          setLists(importedLists);
+          setCurrentList(importedLists[0] || null);
+          alert("共有データを読み込みました！");
+        }
+      } catch (e) {
+        console.error("データ読み込み失敗:", e);
+      }
+    }
+  }, []);
+
+  // ---------------------------
+  // 各種操作関数
+  // ---------------------------
+  function addList() {
+    const name = prompt("リスト名を入力:");
+    if (!name) return;
+    const newLists = [...lists, { name, items: [] }];
+    setLists(newLists);
+    setCurrentList(newLists[newLists.length-1]);
+  }
+
+  function deleteList() {
+    if (!currentList) return;
+    if (!confirm(`リスト「${currentList.name}」を削除しますか？`)) return;
+    setLists(lists.filter(l => l.name !== currentList.name));
+    setCurrentList(null);
+  }
+
+  function addItem() {
+    if(!currentList) return;
+    const name = prompt("商品名:");
+    const url = prompt("URL:");
+    const price = prompt("値段:");
+    const memo = prompt("メモ:");
+    const option = prompt("メモ2:");
+    if (!name && !url && !price) return;
+    const newItem = { id: Date.now(), name, url, price, memo, option, exclude: false };
+    setLists(lists.map(list =>
+      list.name === currentList.name
+        ? { ...list, items: [...list.items, newItem] }
+        : list
+    ));
+  }
+
+  function deleteItem(id) {
+    if(!currentList) return;
+    const deletedItem = currentList.items.find(i => i.id === id);
+    setLists(lists.map(list =>
+      list.name === currentList.name
+        ? { ...list, items: list.items.filter(i => i.id !== id) }
+        : list
+    ));
+    setTrash([...trash, deletedItem]);
+  }
+
+  function restoreItem() {
+    if (trash.length === 0) return;
+    const item = trash[trash.length - 1];
+    const listName = prompt("復元先のリスト名を入力:");
+    if (!listName) return;
+    setLists(lists.map(list =>
+      list.name === listName
+        ? { ...list, items: [...list.items, item] }
+        : list
+    ));
+    setTrash(trash.slice(0, -1));
+  }
+
+  function generateShareLink() {
+  const data = JSON.stringify(lists);
+  const compressed = LZString.compressToEncodedURIComponent(data);
+  const url = `${window.location.origin}${window.location.pathname}#data=${compressed}`;
+  navigator.clipboard.writeText(url);
+  alert("共有URLをコピーしました！\n" + url);
+}
+
+// ページ読み込み時に復元
+React.useEffect(() => {
+  const hash = window.location.hash;
+  if (hash.startsWith("#data=")) {
+    try {
+      const compressed = hash.slice(6);
+      const decoded = LZString.decompressFromEncodedURIComponent(compressed);
+      const importedLists = JSON.parse(decoded);
+      if (Array.isArray(importedLists)) {
+        setLists(importedLists);
+        setCurrentList(importedLists[0] || null);
+        alert("共有データを読み込みました！");
+      }
+    } catch(e) { console.error(e); }
+  }
+}, []);
+
+function base64UrlEncode(str) {
+  return btoa(unescape(encodeURIComponent(str)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+
+  // 並び替え
+  const dragStartIndex = React.useRef(null);
+  function handleDragStart(e,index){ dragStartIndex.current = index; }
+  function handleDrop(e,index){
+    e.preventDefault();
+    const newLists=[...lists];
+    const dragged=newLists.splice(dragStartIndex.current,1)[0];
+    newLists.splice(index,0,dragged);
+    setLists(newLists);
+  }
+  function handleDragOver(e){ e.preventDefault(); }
+
+  // アイコン群
+  const PlusIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/></svg>);
+  const TrashIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/></svg>);
+  const RestoreIcon = () => (<svg stroke="currentColor" fill="none" strokeWidth="3" viewBox="0 0 22 22" strokeLinecap="round" strokeLinejoin="round" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M3.06 13a9 9 0 1 0 .49 -4.087"></path><path d="M3 4.001v5h5"></path></svg>);
+  const ShareIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.5 2.5 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5"/></svg>);
+
+  const total = currentList 
+    ? currentList.items.filter(i => !i.exclude).reduce((acc, i) => acc + (Number(i.price)||0), 0) + (Number(shipping)||0)
+    : 0;
+
+  return (
+    <div>
+      <h1>買い物リスト</h1>
+      <div className="tabs">
+        {lists.map((list,index)=>(
+          <div
+            key={list.name}
+            className={
+                "tab" + ((currentList && currentList.name === list.name) ? " active" : "")
+            }
+            draggable
+            onDragStart={e => handleDragStart(e, index)}
+            onDragOver={handleDragOver}
+            onDrop={e => handleDrop(e, index)}
+            onClick={() => setCurrentList(list)}
+            >
+            {list.name}
+        </div>
+
+        ))}
+        <button className="restore-btn" onClick={restoreItem}><RestoreIcon /></button>
+        <button className="add-btn" onClick={addList}><PlusIcon /></button>
+        <button className="delete-btn" onClick={deleteList}><TrashIcon /></button>
+        <button className="share-btn" style={{backgroundColor:"#5865F2"}} onClick={generateShareLink}><ShareIcon /></button>
+      </div>
+
+      {currentList && (
+        <div>
+          <h2>{currentList.name}</h2>
+          <button className="add-btn" onClick={addItem}><PlusIcon /></button>
+          <div style={{margin: "10px 0"}}>
+            送料: <input type="number" value={shipping} onChange={e=>setShipping(e.target.value)} placeholder="0" style={{width: "80px"}} /> 円
+          </div>
+          <ul>
+            {currentList.items.map(item=>{
+              let domain="";
+              try{ domain=item.url?new URL(item.url).hostname:""; }catch(e){}
+              return (
+                <li key={item.id} className="item-card">
+                  <div className="item-info">
+                    {domain && <img src={`https://www.google.com/s2/favicons?domain=${domain}`} alt="favicon"/>}
+                    <div className="item-text">
+                      <a href={item.url} target="_blank" rel="noopener noreferrer">{item.name}</a>
+                      <small>{item.price?`¥${item.price} / `:""}{item.memo} {item.option}</small>
+                      <div>
+                        計算に含めない <input type="checkbox" checked={item.exclude||false} onChange={()=>{
+                          const newItems = currentList.items.map(i=>
+                            i.id===item.id ? {...i, exclude: !i.exclude} : i
+                          );
+                          setLists(lists.map(l => l.name===currentList.name?{...l, items: newItems}:l));
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                  <button className="delete-btn" onClick={()=>deleteItem(item.id)}><TrashIcon /></button>
+                </li>
+              );
+            })}
+          </ul>
+          <h3>合計: ¥{total.toLocaleString()}</h3>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
