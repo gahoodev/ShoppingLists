@@ -1,9 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>買い物リスト</title>
 <style>
   :root{
     --bg: #0f1724;
@@ -66,13 +62,21 @@
     border-radius:999px;
     cursor:pointer;
     background: transparent;
-    color:var(--muted);
+    color:var(--text);
     border:1px solid rgba(255,255,255,0.04);
     transition: all .18s ease;
     font-size:0.95rem;
   }
   .tab:hover{ transform:translateY(-2px); color:var(--text); border-color:rgba(124,92,255,0.16); }
-  .tab.active{ background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:var(--accent-foreground); box-shadow: 0 6px 18px rgba(92,72,200,0.18); }
+  .tab.active{
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    color:#fff;
+    box-shadow: 0 6px 18px rgba(255, 255, 255, 0.18);
+  }
+  [data-theme="light"] .tab { color: #222; }
+  [data-theme="light"] .tab.active { color: #fff; }
+  [data-theme="dark"] .tab { color: #e6eef8; }
+  [data-theme="dark"] .tab.active { color: #fff; }
 
   /* Buttons */
   button{ margin:4px; padding:8px 12px; border-radius:10px; border:none; display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; font-size:0.9rem; }
