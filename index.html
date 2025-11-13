@@ -322,8 +322,23 @@ function App() {
   const data = JSON.stringify(lists);
   const compressed = LZString.compressToEncodedURIComponent(data);
   const url = `${window.location.origin}${window.location.pathname}#data=${compressed}`;
-  navigator.clipboard.writeText(url);
-  alert("共有URLをコピーしました！\n" + url);
+  // x.gd APIで短縮
+  const apiKey = "39a2c456bf6da267e048953173973411";
+  fetch(`https://xgd.io/V1/shorten?url=${encodeURIComponent(url)}&key=${apiKey}`)
+    .then(res => res.json())
+    .then(result => {
+      if (result.status === 200 && result.shorturl) {
+        navigator.clipboard.writeText(result.shorturl);
+        alert("短縮URLをコピーしました！\n" + result.shorturl);
+      } else {
+        navigator.clipboard.writeText(url);
+        alert("短縮に失敗したため通常URLをコピーしました。\n" + url);
+      }
+    })
+    .catch(() => {
+      navigator.clipboard.writeText(url);
+      alert("短縮に失敗したため通常URLをコピーしました。\n" + url);
+    });
 }
 
 // ページ読み込み時に復元
@@ -371,6 +386,14 @@ function base64UrlEncode(str) {
   const SunIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6.76 4.84l-1.8-1.79L3.17 4.84l1.79 1.8 1.8-1.8zM1 13h3v-2H1v2zm10-9h2V1h-2v3zm7.04 1.05l1.79-1.8-1.79-1.79-1.8 1.79 1.8 1.8zM17.24 19.16l1.8 1.79 1.79-1.79-1.79-1.8-1.8 1.8zM20 11v2h3v-2h-3zM12 7a5 5 0 100 10 5 5 0 000-10zM4.24 19.16l1.8-1.8-1.8-1.79-1.79 1.79 1.79 1.8z"/></svg>);
   const MoonIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>);
 
+  const InfoIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 13A6 6 0 1 1 8 2a6 6 0 0 1 0 12zm.93-6.412-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 .875-.252 1.02-.797l.088-.416c.073-.34.217-.466.508-.466.276 0 .488.16.488.486 0 .273-.176.487-.488.487-.276 0-.488-.16-.488-.486 0-.273.176-.487.488-.487.276 0 .488.16.488.486 0 .273-.176.487-.488.487-.276 0-.488-.16-.488-.486 0-.273.176-.487.488-.487.276 0 .488.16.488.486 0 .273-.176.487-.488.487-.276 0-.488-.16-.488-.486 0-.273.176-.487.488-.487.276 0 .488.16.488.486 0 .273-.176.487-.488.487-.276 0-.488-.16-.488-.486 0-.273.176-.487.488-.487.276 0 .488.16.488.486 0 .273-.176.487-.488.487-.276 0-.488-.16-.488-.486 0-.273.176-.487.488-.487.276 0 .488.16.488.486 0 .273-.176.487-.488.487zM8 5a.905.905 0 1 1 0-1.81A.905.905 0 0 1 8 5z"/></svg>
+  );
+
+  function showCredit() {
+    window.location.href = "https://google.com"
+  }
+
   const total = currentList 
     ? currentList.items.filter(i => !i.exclude).reduce((acc, i) => acc + (Number(i.price)||0), 0) + (Number(shipping)||0)
     : 0;
@@ -401,6 +424,7 @@ function base64UrlEncode(str) {
   <button className="theme-btn" onClick={toggleTheme} title="テーマ切替">{theme === 'dark' ? <SunIcon/> : <MoonIcon/>}</button>
   <button className={"auto-theme-btn" + (autoTheme?" active":"")} onClick={toggleAutoTheme} title="自動テーマ">Auto</button>
   <button className="share-btn" style={{backgroundColor:"#5865F2"}} onClick={generateShareLink}><ShareIcon /></button>
+    <button className="theme-btn" title="クレジット" onClick={showCredit}><InfoIcon /></button>
       </div>
 
       {currentList && (
