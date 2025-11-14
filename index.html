@@ -324,7 +324,7 @@ function App() {
   const url = `${window.location.origin}${window.location.pathname}#data=${compressed}`;
 
   // Cloudflare WorkerのURLに短縮リクエスト
-  const workerEndpoint = "shopi.mayonezuch.workers.dev"; // ←ここを自分のWorker URLに
+  const workerEndpoint = "https://shopi.mayonezuch.workers.dev"; // ←ここを自分のWorker URLに
   fetch(`${workerEndpoint}?url=${encodeURIComponent(url)}`)
     .then(res => res.json())
     .then(result => {
@@ -473,4 +473,5 @@ root.render(<App />);
 </script>
 </body>
 </html>
+
 
