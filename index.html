@@ -322,9 +322,10 @@ function App() {
   const data = JSON.stringify(lists);
   const compressed = LZString.compressToEncodedURIComponent(data);
   const url = `${window.location.origin}${window.location.pathname}#data=${compressed}`;
-  // x.gd APIで短縮
-  const apiKey = "39a2c456bf6da267e048953173973411";
-  fetch(`https://xgd.io/V1/shorten?url=${encodeURIComponent(url)}&key=${apiKey}`)
+
+  // Cloudflare WorkerのURLに短縮リクエスト
+  const workerEndpoint = "shopi.mayonezuch.workers.dev"; // ←ここを自分のWorker URLに
+  fetch(`${workerEndpoint}?url=${encodeURIComponent(url)}`)
     .then(res => res.json())
     .then(result => {
       if (result.status === 200 && result.shorturl) {
@@ -472,3 +473,4 @@ root.render(<App />);
 </script>
 </body>
 </html>
+
