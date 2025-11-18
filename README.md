@@ -1,5 +1,16 @@
 # ShoppingLists
-<ins>**ShoppingListsは、2025/11/19 午前6:30を持ちまして、</ins>[GitLab Pages](https://gahoodev.gitlab.io/ShoppingLists)<ins>版に移行しました。**</ins>
+> [!CAUTION]
+> <ins>**ShoppingListsは、2025/11/19 午前6:30を持ちまして、</ins>[GitLab Pages](https://gahoodev.gitlab.io/ShoppingLists)<ins>版に移行しました。**</ins>
+
+> [!NOTE]
+> 従来の共有リンクは使用できなくなりますが、共有リンクを開いてから、以下のようにリンクを編集し、再読み込みしてから共有し直すことで対処できます。
+> 
+> 例↓
+> ```diff
+> - https://gahoodev.github.io/ShoppingLists/#data=###############
+> + https://gahoodev.gitlab.io/ShoppingLists/#data=###############
+
+[Gahoo.devのホームページはこちら](https://gahoodev.gitlab.io/home)
 
 あらゆるサイトの「欲しい」を、一つの場所に。
 
